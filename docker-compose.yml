@@ -6,8 +6,8 @@ services:
     ports:
       - "27018:27017"
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=integrity_secure_2026
+      MONGO_INITDB_ROOT_USERNAME: mariana
+      MONGO_INITDB_ROOT_PASSWORD: '111'
     volumes:
       - integrity_scan_data:/data/db
     networks:

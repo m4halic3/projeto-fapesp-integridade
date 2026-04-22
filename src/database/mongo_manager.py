@@ -15,7 +15,8 @@ class MongoManager:
         self.collection = self.db[self.collection_name]
 
     def salvar_analise(self, dados):
+        """Salva ou atualiza os resultados da perícia no banco."""
         query = {"arquivo": dados.get("arquivo")}
         update = {"$set": dados}
         result = self.collection.update_one(query, update, upsert=True)
-        return result.upserted_id or "Atualizado"
+        return "Atualizado/Inserido com sucesso"

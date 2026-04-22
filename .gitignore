@@ -2,7 +2,7 @@
 venv/
 .env
 
-# Dados (Subimos apenas as pastas, não os arquivos pesados)
+# Dados (Subi apenas as pastas, não os arquivos pesados)
 data/raw/*.pdf
 data/processed/*.json
 

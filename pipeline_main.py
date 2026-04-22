@@ -1,63 +1,52 @@
-import json
 import os
+import json
 from pathlib import Path
 from datetime import datetime
-from dotenv import load_dotenv
-
-# Importação dos módulos internos
-from src.extractors.pdf_engine import extrair_texto_bruto
-from src.extractors.openalex_engine import consultar_openalex_por_titulo
-from src.transformers.llm_processor import processar_com_llama
-from src.transformers.bert_embedder import processar_json_com_bert
 from src.database.mongo_manager import MongoManager
-
-load_dotenv()
+from src.extractors.pdf_engine import extrair_texto_bruto
+from src.extractors.image_engine import extrair_e_analisar_imagens
+from src.transformers.bert_embedder import BertEmbedder
 
 def executar():
-    # Inicializa o Banco de Dados (Porta 27018 conforme .env)
     db = MongoManager()
-    
+    bert = BertEmbedder()
     raw_dir = Path("data/raw")
-    processed_dir = Path("data/processed")
-    processed_dir.mkdir(parents=True, exist_ok=True)
-
+    
     for pdf in raw_dir.glob("*.pdf"):
-        print(f"\n--- Processando: {pdf.name} ---")
+        print(f"--- Iniciando Perícia: {pdf.name} ---")
         
-        # 1. Extração
+        # 1. Extração de Texto e Imagens
         texto_paginas = extrair_texto_bruto(pdf)
-        if not texto_paginas: continue
+        imagens_extraidas = extrair_e_analisar_imagens(pdf)
+        
+        # 2. Geração de DNA Textual (Embedding do Resumo e Conclusão)
+        resumo_text = texto_paginas[0]["texto"] if texto_paginas else ""
+        conclusao_text = texto_paginas[-1]["texto"] if texto_paginas else ""
+        
+        emb_resumo = bert.gerar_embedding(resumo_text)
+        emb_conclusao = bert.gerar_embedding(conclusao_text)
+        
+        score_interno = 0
+        if emb_resumo and emb_conclusao:
+            score_interno = bert.calcular_similaridade(emb_resumo[0], emb_conclusao[0])
 
-        # 2. Metadados API
-        titulo_busca = texto_paginas[0]["texto"].split('\n')[0].strip()
-        metadados_externos = consultar_openalex_por_titulo(titulo_busca)
-
-        # 3. Qualitativo (Llama)
-        contexto = f"RESUMO: {texto_paginas[0]['texto'][:2000]}\nCONCLUSÃO: {texto_paginas[-1]['texto'][-2000:]}"
-        analise_llama = processar_com_llama(contexto)
-
-        # 4. Estrutura Inicial
-        dados_finais = {
+        # 3. Consolidação dos Dados (Prontos para cruzar com OpenAlex/RetractionWatch)
+        dados_pericia = {
             "arquivo": pdf.name,
-            "ultima_analise": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "metadados_api": metadados_externos,
-            "diagnostico_ia": analise_llama,
-            "estrutura_documento": texto_paginas 
+            "data_pericia": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "assinatura_embeddings": {
+                "resumo": emb_resumo,
+                "conclusao": emb_conclusao,
+                "similaridade_interna": score_interno
+            },
+            "imagens_detectadas": imagens_extraidas,
+            "texto_completo": texto_paginas,
+            "status_auditoria": "Aguardando cruzamento com robôs externos"
         }
 
-        # 5. Salvamento temporário para o BERT processar
-        output_file = processed_dir / f"{pdf.stem}.json"
-        with open(output_file, 'w', encoding='utf-8') as f:
-            json.dump(dados_finais, f, ensure_ascii=False, indent=4)
-        
-        # 6. Quantitativo (BERT) + Atualização MongoDB
-        print("-> Calculando similaridade BERT...")
-        dados_completos = processar_json_com_bert(output_file)
-        
-        print("-> Salvando no MongoDB (IntegrityScan)...")
-        db.salvar_analise(dados_completos)
-        
-        print(f"Sucesso: {pdf.name}")
+        # 4. Persistência
+        db.salvar_analise(dados_pericia)
+        print(f"✅ Perícia concluída e salva no MongoDB.")
 
 if __name__ == "__main__":
     executar()

@@ -39,3 +39,7 @@ projeto_fapesp/
 * **`data/`**: Camada de armazenamento de dados:
     * `raw/`: Diretório de entrada contendo os arquivos PDF originais submetidos à análise.
     * `processed/`: Repositório de saída com os resultados estruturados em formato **JSON**, permitindo auditoria e futuras visualizações de dados.
+
+
+## Como acessar o Banco de Dados (Dev)
+docker exec -it mongodb-integrity-scan mongosh -u mariana -p 111 --authenticationDatabase admin
