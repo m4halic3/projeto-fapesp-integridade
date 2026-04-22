@@ -1,13 +1,18 @@
 import requests
 import json
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def processar_com_llama(texto_artigo):
     """
-    Realiza a inferência usando Llama 3 para identificar o motivo da retratação.
+    Realiza a inferência usando Llama 3 para identificar sinais de IA.
     """
+    # Carrega configurações do .env
     url = "http://localhost:11434/api/generate"
+    model = os.getenv("OLLAMA_MODEL", "llama3.2:1b")
     
-    # Prompt focado em integridade científica (Recod.AI)
     prompt = f"""
     Você é um auditor de integridade científica. Analise o texto abaixo e responda:
     1. Existe uma mudança brusca de estilo ou vocabulário entre o desenvolvimento e a conclusão?
@@ -19,7 +24,7 @@ def processar_com_llama(texto_artigo):
     """
 
     payload = {
-        "model": "llama3",
+        "model": model,
         "prompt": prompt,
         "stream": False,
         "format": "json"
@@ -27,7 +32,8 @@ def processar_com_llama(texto_artigo):
 
     try:
         response = requests.post(url, json=payload, timeout=300)
-        resultado = response.json().get("response")
-        return json.loads(resultado)
+        response.raise_for_status()
+        resultado_bruto = response.json().get("response")
+        return json.loads(resultado_bruto)
     except Exception as e:
-        return {"erro": f"Llama offline ou erro de conexão: {str(e)}"}
+        return {"erro": f"Erro na inferência Llama: {str(e)}"}

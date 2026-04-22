@@ -1,0 +1,21 @@
+version: '3.8'
+services:
+  db_integrity:
+    image: mongo:latest
+    container_name: mongodb-integrity-scan
+    ports:
+      - "27018:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=integrity_secure_2026
+    volumes:
+      - integrity_scan_data:/data/db
+    networks:
+      - integrity_network
+
+networks:
+  integrity_network:
+    driver: bridge
+
+volumes:
+  integrity_scan_data:

@@ -10,6 +10,9 @@ transformers==4.39.3
 torch==2.2.2
 scikit-learn==1.4.2
 
+# Banco de Dados (NoSQL)
+pymongo==4.6.3
+
 # Utilidades
 pandas==2.2.2
 python-dotenv==1.0.1
