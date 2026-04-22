@@ -5,10 +5,12 @@ from datetime import datetime
 # O ponto antes de extractors e transformers resolve o erro de módulo
 from src.extractors.pdf_engine import extrair_texto_bruto
 from src.transformers.llm_processor import processar_com_llama
+from src.transformers.bert_embedder import processar_json_com_bert
 
 def executar():
     raw_dir = Path("data/raw")
     processed_dir = Path("data/processed")
+    processar_json_com_bert("data/processed/artigo_electrosfiCSBC.json")
     processed_dir.mkdir(parents=True, exist_ok=True)
 
     for pdf in raw_dir.glob("*.pdf"):

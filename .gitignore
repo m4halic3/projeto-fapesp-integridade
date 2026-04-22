@@ -1,7 +1,12 @@
+# Ambientes virtuais
 venv/
-__pycache__/
 .env
-data/raw/*
-!data/raw/.gitkeep
-data/processed/*
-!data/processed/.gitkeep
+
+# Dados (Subimos apenas as pastas, não os arquivos pesados)
+data/raw/*.pdf
+data/processed/*.json
+
+# Cache de Python e Sistema
+__pycache__/
+*.pyc
+.DS_Store
